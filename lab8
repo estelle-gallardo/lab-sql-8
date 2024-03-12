@@ -1,0 +1,63 @@
+-- 1. Rank films by length (filter out the rows with nulls or zeros in length column). 
+-- Select only columns title, length and rank in your output.
+USE sakila;
+SELECT * FROM film LIMIT 3;
+SELECT title, length, DENSE_RANK() OVER (length ) AS 'rank'
+	FROM film
+		WHERE length is not null or length!=0;
+  
+
+
+ -- 2. Rank films by length within the rating category (filter out the rows with nulls or zeros in length column). 
+ -- In your output, only select the columns title, length, rating and rank.
+    SELECT title, length, rating, DENSE_RANK() OVER (PARTITION BY rating ORDER BY length) AS rank_rating
+		FROM sakila.film
+			WHERE length is not null OR length <> 0;
+            
+-- 3. How many films are there for each of the categories in the category table? 
+-- Hint: Use appropriate join between the tables "category" and "film_category".	
+
+SELECT COUNT(film_id) AS number_films, category_id 
+	FROM film_category
+    GROUP BY category_id; -- same thing without the names of categories
+    
+SELECT c.category_id, c.name AS category_name, COUNT(C.category_id) AS number_films 
+	FROM category c
+	LEFT JOIN film_category f
+		ON c.category_id = f.category_id
+	GROUP BY c.category_id;
+
+-- 4. Which actor has appeared in the most films? Hint: You can create a join between the tables "actor" 
+-- and "film_actor" and count the number of times an actor appears.
+--  Gina Degeneres
+
+SELECT a.actor_id, first_name, last_name, COUNT(a.actor_id) as number_films
+	FROM sakila.actor a
+    LEFT JOIN sakila.film_actor f on a.actor_id = f.actor_id
+    GROUP BY a.actor_id
+    ORDER BY number_films DESC
+		LIMIT 1;
+    
+-- 5. Which is the most active customer (the customer that has rented the most number of films)? 
+-- Hint: Use appropriate join between the tables "customer" and "rental" and count the rental_id for each customer.
+-- customer_id : 148, Eleanor Hunt
+
+SELECT count(r.rental_id) as num_rentals, r.customer_id, c.first_name, c.last_name
+	FROM rental r
+    LEFT JOIN customer c ON r.customer_id = c.customer_id
+    GROUP BY r.customer_id
+    ORDER BY num_rentals DESC
+    LIMIT 1;
+    
+
+-- Bonus: Which is the most rented film? (Bucket Brotherhood).
+SELECT f.film_id, f.title,  COUNT(*) as nr_rentals
+	FROM sakila.rental r
+    LEFT JOIN sakila.inventory i  ON r.inventory_id = i.inventory_id
+    LEFT JOIN sakila.film f ON f.film_id = i.film_id
+    GROUP BY f.film_id
+    ORDER BY nr_rentals desc
+    LIMIT 1;
+    
+    
+    
